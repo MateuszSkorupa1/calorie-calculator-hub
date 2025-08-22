@@ -113,6 +113,17 @@
     @apply max-w-6xl mx-auto space-y-8;
   }
 
+  /* Large screen layout */
+  @media (min-width: 1024px) {
+    .calculator-grid {
+      @apply grid grid-cols-3 gap-8 space-y-0;
+    }
+
+    .calculator-section {
+      @apply flex flex-col;
+    }
+  }
+
   .calculator-section {
     @apply relative;
   }
@@ -199,6 +210,17 @@
     }
   }
 
+  /* Tablet layout */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .calculator-grid {
+      @apply grid grid-cols-2 gap-6 space-y-0;
+    }
+
+    .calculator-section:last-child {
+      @apply col-span-2 max-w-md mx-auto;
+    }
+  }
+
   /* Global Styles */
   :global(html) {
     @apply scroll-smooth;
@@ -210,15 +232,9 @@
     background: transparent;
   }
 
-  /* Add some spacing between calculators */
+  /* Enhanced calculator shadows */
   :global(.calculator-container) {
     @apply shadow-2xl;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  }
-
-  /* Hover effects for calculator sections */
-  .calculator-section:hover .section-header {
-    @apply scale-105;
-    background: rgba(255, 255, 255, 0.15);
   }
 </style>
