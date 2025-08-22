@@ -20,6 +20,9 @@
   let activityLevel = defaultValues.activityLevel ?? 1.55;
   let goal: 'lose' | 'maintain' | 'gain' = defaultValues.goal ?? 'maintain';
 
+  // Animation states
+  let isCalculated = false;
+
   // Reactive result: automatically updates whenever inputs change
   $: result = (() => {
     switch (type) {
@@ -31,54 +34,394 @@
         const t = tdee(weight, height, age, gender, activityLevel);
         return calorieGoal(t, goal);
       default:
-        return null;
+        return 0;
     }
   })();
+
+  $: if (result !== 0) {
+    isCalculated = true;
+  }
+
+  // Get result unit and description
+  $: resultInfo = (() => {
+    switch (type) {
+      case 'bmi':
+        const bmiCategory = result < 18.5 ? 'Underweight' :
+                           result < 25 ? 'Normal' :
+                           result < 30 ? 'Overweight' : 'Obese';
+        return { unit: 'BMI', description: bmiCategory };
+      case 'tdee':
+        return { unit: 'kcal/day', description: 'Total Daily Energy' };
+      case 'calorie':
+        const goalText = goal === 'lose' ? 'Weight Loss' :
+                        goal === 'gain' ? 'Muscle Gain' : 'Maintenance';
+        return { unit: 'kcal/day', description: goalText };
+      default:
+        return { unit: '', description: '' };
+    }
+  })();
+
+  // Activity level labels
+  const activityLabels = {
+    1.2: 'Sedentary',
+    1.375: 'Light Activity',
+    1.55: 'Moderate Activity',
+    1.725: 'Active',
+    1.9: 'Very Active'
+  };
 </script>
 
-<div class="p-6 max-w-md mx-auto bg-white rounded-xl shadow-md space-y-4">
-  <h2 class="text-2xl font-semibold text-center">Calculate Your {type.toUpperCase()}</h2>
+<div class="calculator-container">
+  <!-- Overlay for hover effect -->
+  <div class="hover-overlay"></div>
 
-  <div class="space-y-4">
-    <input type="number" bind:value={weight} placeholder="Weight (kg)" class="input" />
-    <input type="number" bind:value={height} placeholder="Height (cm)" class="input" />
+  <!-- Header -->
+  <div class="header">
+    <div class="header-pills">
+      <div class="pill pill-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <div class="pill pill-secondary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <div class="pill pill-secondary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
 
-    {#if type !== 'bmi'}
-      <input type="number" bind:value={age} placeholder="Age" class="input" />
-      <select bind:value={gender} class="input">
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-      </select>
-      <select bind:value={activityLevel} class="input">
-        <option value={1.2}>Sedentary</option>
-        <option value={1.375}>Light</option>
-        <option value={1.55}>Moderate</option>
-        <option value={1.725}>Active</option>
-        <option value={1.9}>Very Active</option>
-      </select>
-    {/if}
-
-    {#if type === 'calorie'}
-      <select bind:value={goal} class="input">
-        <option value="lose">Lose Weight</option>
-        <option value="maintain">Maintain</option>
-        <option value="gain">Gain Muscle</option>
-      </select>
+  <!-- Main Result Display -->
+  <div class="result-display" class:calculated={isCalculated}>
+    {#if result !== null}
+      <div class="result-value">{result.toFixed(type === 'bmi' ? 1 : 0)}</div>
+      <div class="result-unit">{resultInfo.unit}</div>
+      <div class="result-description">{resultInfo.description}</div>
+    {:else}
+      <div class="result-placeholder">Enter your details</div>
     {/if}
   </div>
 
-  <div class="mt-4 text-center text-xl font-semibold">
-    {#if result !== null}
-      Result: {result.toFixed(1)}
+  <!-- Input Grid -->
+  <div class="input-grid">
+    <!-- Weight -->
+    <div class="input-card">
+      <label class="input-label">Weight</label>
+      <input
+        type="number"
+        bind:value={weight}
+        class="input-field"
+        placeholder="70"
+      />
+      <span class="input-unit">kg</span>
+    </div>
+
+    <!-- Height -->
+    <div class="input-card">
+      <label class="input-label">Height</label>
+      <input
+        type="number"
+        bind:value={height}
+        class="input-field"
+        placeholder="170"
+      />
+      <span class="input-unit">cm</span>
+    </div>
+
+    <!-- Age (if needed) -->
+    {#if type !== 'bmi'}
+      <div class="input-card">
+        <label class="input-label">Age</label>
+        <input
+          type="number"
+          bind:value={age}
+          class="input-field"
+          placeholder="25"
+        />
+        <span class="input-unit">years</span>
+      </div>
+
+      <!-- Gender -->
+      <div class="input-card">
+        <label class="input-label">Gender</label>
+        <div class="gender-toggle">
+          <button
+            class="gender-btn"
+            class:active={gender === 'male'}
+            on:click={() => gender = 'male'}
+          >
+            Male
+          </button>
+          <button
+            class="gender-btn"
+            class:active={gender === 'female'}
+            on:click={() => gender = 'female'}
+          >
+            Female
+          </button>
+        </div>
+      </div>
+
+      <!-- Activity Level -->
+      <div class="input-card full-width">
+        <label class="input-label">Activity Level</label>
+        <div class="activity-grid">
+          {#each Object.entries(activityLabels) as [value, label]}
+            <button
+              class="activity-btn"
+              class:active={activityLevel === parseFloat(value)}
+              on:click={() => activityLevel = parseFloat(value)}
+            >
+              {label}
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    <!-- Goal (if calorie calculator) -->
+    {#if type === 'calorie'}
+      <div class="input-card full-width">
+        <label class="input-label">Goal</label>
+        <div class="goal-grid">
+          <button
+            class="goal-btn"
+            class:active={goal === 'lose'}
+            on:click={() => goal = 'lose'}
+          >
+            <div class="goal-icon">📉</div>
+            <div class="goal-text">Lose Weight</div>
+          </button>
+          <button
+            class="goal-btn"
+            class:active={goal === 'maintain'}
+            on:click={() => goal = 'maintain'}
+          >
+            <div class="goal-icon">⚖️</div>
+            <div class="goal-text">Maintain</div>
+          </button>
+          <button
+            class="goal-btn"
+            class:active={goal === 'gain'}
+            on:click={() => goal = 'gain'}
+          >
+            <div class="goal-icon">💪</div>
+            <div class="goal-text">Gain Muscle</div>
+          </button>
+        </div>
+      </div>
     {/if}
   </div>
 </div>
 
-<style>
-  .input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 0.375rem;
+<style lang="postcss">
+  @reference "tailwindcss";
+  .calculator-container {
+    @apply max-w-md mx-auto rounded-3xl p-6 min-h-[600px] relative overflow-hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .hover-overlay {
+    @apply absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+  }
+
+  .calculator-container:hover .hover-overlay {
+    @apply opacity-10;
+  }
+
+  /* Header */
+  .header {
+    @apply flex justify-center mb-8 relative z-10;
+  }
+
+  .header-pills {
+    @apply flex gap-3;
+  }
+
+  .pill {
+    @apply w-12 h-12 rounded-2xl flex items-center justify-center text-white transition-all duration-300;
+  }
+
+  .pill-primary {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .pill-secondary {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Result Display */
+  .result-display {
+    @apply text-center mb-10 py-10 px-5 rounded-3xl border transition-all duration-500 ease-out relative z-10 scale-95 opacity-70;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .result-display.calculated {
+    @apply scale-100 opacity-100;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .result-value {
+    @apply text-6xl font-black text-white mb-2 transition-all duration-300;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .result-unit {
+    @apply text-xl mb-1;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .result-description {
+    @apply text-base uppercase tracking-wide;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .result-placeholder {
+    @apply text-2xl;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* Input Grid */
+  .input-grid {
+    @apply grid grid-cols-2 gap-4 relative z-10;
+  }
+
+  .input-card {
+    @apply rounded-2xl p-5 border transition-all duration-300 hover:-translate-y-0.5 relative;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .input-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .input-card.full-width {
+    @apply col-span-2;
+  }
+
+  .input-label {
+    @apply block text-sm font-semibold mb-3 uppercase tracking-wide;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .input-field {
+    @apply w-full border-2 rounded-xl py-3 px-4 text-white text-xl font-semibold text-center transition-all duration-300;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .input-field:focus {
+    @apply outline-none scale-105;
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .input-field::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .input-unit {
+    @apply absolute right-4 bottom-5 text-sm font-medium;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* Gender Toggle */
+  .gender-toggle {
+    @apply flex rounded-xl p-1;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .gender-btn {
+    @apply flex-1 py-3 px-4 transition-all duration-300 rounded-lg font-semibold;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border: none;
+  }
+
+  .gender-btn.active {
+    @apply text-white scale-105;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Activity Grid */
+  .activity-grid {
+    @apply grid grid-cols-3 gap-2;
+  }
+
+  .activity-btn {
+    @apply py-3 px-2 transition-all duration-300 rounded-xl border-2 text-xs font-semibold text-center;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border-color: transparent;
+  }
+
+  .activity-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .activity-btn.active {
+    @apply text-white scale-105;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Goal Grid */
+  .goal-grid {
+    @apply grid grid-cols-3 gap-3;
+  }
+
+  .goal-btn {
+    @apply flex flex-col items-center gap-2 py-4 px-2 transition-all duration-300 rounded-2xl border-2;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border-color: transparent;
+  }
+
+  .goal-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .goal-btn.active {
+    @apply text-white scale-105;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .goal-icon {
+    @apply text-2xl;
+  }
+
+  .goal-text {
+    @apply text-xs font-semibold text-center;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .calculator-container {
+      @apply mx-3 p-5;
+    }
+
+    .result-value {
+      @apply text-5xl;
+    }
+
+    .input-grid {
+      @apply gap-3;
+    }
+
+    .activity-grid {
+      @apply grid-cols-2;
+    }
   }
 </style>
