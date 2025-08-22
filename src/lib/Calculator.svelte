@@ -12,52 +12,106 @@
     goal?: 'lose' | 'maintain' | 'gain';
   } = {};
 
-  // Inputs
-  let weight = defaultValues.weight ?? 70;
-  let height = defaultValues.height ?? 170;
+  // Unit system
+  let isMetric = true;
+
+  // Internal storage - always keep values in metric for consistency
+  let weightKg = defaultValues.weight ?? 70;
+  let heightCm = defaultValues.height ?? 170;
   let age = defaultValues.age ?? 25;
   let gender: Gender = defaultValues.gender ?? 'male';
   let activityLevel = defaultValues.activityLevel ?? 1.55;
   let goal: 'lose' | 'maintain' | 'gain' = defaultValues.goal ?? 'maintain';
 
+  // Display values - these are what the user sees and edits
+  $: weight = isMetric ? weightKg : Math.round(weightKg * 2.20462 * 10) / 10;
+  $: height = isMetric ? heightCm : Math.round(heightCm * 0.393701 * 10) / 10;
+
   // Animation states
   let isCalculated = false;
 
+  // Update internal metric values when user changes display values
+  function updateWeight(value: number) {
+    weightKg = isMetric ? value : value * 0.453592;
+  }
+
+  function updateHeight(value: number) {
+    heightCm = isMetric ? value : value * 2.54;
+  }
+
   // Reactive result: automatically updates whenever inputs change
   $: result = (() => {
-    switch (type) {
-      case 'bmi':
-        return bmi(weight, height);
-      case 'tdee':
-        return tdee(weight, height, age, gender, activityLevel);
-      case 'calorie':
-        const t = tdee(weight, height, age, gender, activityLevel);
-        return calorieGoal(t, goal);
-      default:
-        return 0;
+    // Validate inputs using internal metric values
+    if (!weightKg || weightKg <= 0 || !heightCm || heightCm <= 0) return null;
+    if (type !== 'bmi' && (!age || age <= 0)) return null;
+
+    try {
+      switch (type) {
+        case 'bmi':
+          return bmi(weightKg, heightCm);
+        case 'tdee':
+          return tdee(weightKg, heightCm, age, gender, activityLevel);
+        case 'calorie':
+          const tdeeValue = tdee(weightKg, heightCm, age, gender, activityLevel);
+          return calorieGoal(tdeeValue, goal);
+        default:
+          return null;
+      }
+    } catch (error) {
+      console.error('Calculation error:', error);
+      return null;
     }
   })();
 
-  $: if (result !== 0) {
+  $: if (result !== null) {
     isCalculated = true;
   }
 
   // Get result unit and description
   $: resultInfo = (() => {
+    if (result === null) return { unit: '', description: '', color: '' };
+
     switch (type) {
       case 'bmi':
-        const bmiCategory = result < 18.5 ? 'Underweight' :
-                           result < 25 ? 'Normal' :
-                           result < 30 ? 'Overweight' : 'Obese';
-        return { unit: 'BMI', description: bmiCategory };
+        let bmiCategory = 'Unknown';
+        let bmiColor = 'text-gray-400';
+
+        if (result < 18.5) {
+          bmiCategory = 'Underweight';
+          bmiColor = 'text-blue-400';
+        } else if (result < 25) {
+          bmiCategory = 'Normal Weight';
+          bmiColor = 'text-green-400';
+        } else if (result < 30) {
+          bmiCategory = 'Overweight';
+          bmiColor = 'text-yellow-400';
+        } else {
+          bmiCategory = 'Obese';
+          bmiColor = 'text-red-400';
+        }
+
+        return { unit: 'BMI', description: bmiCategory, color: bmiColor };
+
       case 'tdee':
-        return { unit: 'kcal/day', description: 'Total Daily Energy' };
+        return {
+          unit: 'kcal/day',
+          description: 'Total Daily Energy Expenditure',
+          color: 'text-green-400'
+        };
+
       case 'calorie':
-        const goalText = goal === 'lose' ? 'Weight Loss' :
-                        goal === 'gain' ? 'Muscle Gain' : 'Maintenance';
-        return { unit: 'kcal/day', description: goalText };
+        const goalText = goal === 'lose' ? 'Weight Loss Goal' :
+                        goal === 'gain' ? 'Muscle Gain Goal' : 'Maintenance Calories';
+        const goalColor = goal === 'lose' ? 'text-red-400' :
+                         goal === 'gain' ? 'text-blue-400' : 'text-green-400';
+        return {
+          unit: 'kcal/day',
+          description: goalText,
+          color: goalColor
+        };
+
       default:
-        return { unit: '', description: '' };
+        return { unit: '', description: '', color: 'text-gray-400' };
     }
   })();
 
@@ -83,11 +137,15 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
       </div>
-      <div class="pill pill-secondary">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-      </div>
+      <button
+        class="pill unit-toggle"
+        class:pill-primary={!isMetric}
+        class:pill-secondary={isMetric}
+        on:click={() => isMetric = !isMetric}
+        title="Switch between Metric and Imperial units"
+      >
+        <span class="unit-text">{isMetric ? 'KG' : 'LB'}</span>
+      </button>
       <div class="pill pill-secondary">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -115,11 +173,15 @@
       <label class="input-label">Weight</label>
       <input
         type="number"
-        bind:value={weight}
+        value={weight}
+        on:input={(e) => updateWeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
         class="input-field"
-        placeholder="70"
+        placeholder={isMetric ? "70" : "154"}
+        step={isMetric ? "0.5" : "0.1"}
+        min="1"
+        max={isMetric ? "300" : "660"}
       />
-      <span class="input-unit">kg</span>
+      <span class="input-unit">{isMetric ? 'kg' : 'lbs'}</span>
     </div>
 
     <!-- Height -->
@@ -127,11 +189,15 @@
       <label class="input-label">Height</label>
       <input
         type="number"
-        bind:value={height}
+        value={height}
+        on:input={(e) => updateHeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
         class="input-field"
-        placeholder="170"
+        placeholder={isMetric ? "170" : "67"}
+        step={isMetric ? "1" : "0.1"}
+        min={isMetric ? "100" : "36"}
+        max={isMetric ? "250" : "96"}
       />
-      <span class="input-unit">cm</span>
+      <span class="input-unit">{isMetric ? 'cm' : 'in'}</span>
     </div>
 
     <!-- Age (if needed) -->
@@ -143,6 +209,9 @@
           bind:value={age}
           class="input-field"
           placeholder="25"
+          step="1"
+          min="10"
+          max="120"
         />
         <span class="input-unit">years</span>
       </div>
@@ -246,7 +315,15 @@
   }
 
   .pill {
-    @apply w-12 h-12 rounded-2xl flex items-center justify-center text-white transition-all duration-300;
+    @apply w-12 h-12 rounded-2xl flex items-center justify-center text-white transition-all duration-300 cursor-pointer;
+  }
+
+  .unit-toggle {
+    @apply hover:scale-110 active:scale-95;
+  }
+
+  .unit-text {
+    @apply text-xs font-bold tracking-wider;
   }
 
   .pill-primary {
