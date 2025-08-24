@@ -23,13 +23,14 @@
   let gender: Gender = defaultValues.gender ?? 'male';
   let formula: 'male' | 'female' = 'male';
 
-  const genderOptions = [
+const genderOptions = [
     { value: 'male', label: 'Male', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="6" /><path d="M17 3h4v4" /><path d="M21 3l-7.5 7.5" /></svg>' },
     { value: 'female', label: 'Female', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6" /><line x1="12" y1="14" x2="12" y2="22" /><line x1="9" y1="19" x2="15" y2="19" /></svg>' },
-    { value: 'non-binary', label: 'Non-binary', icon: '⚧' },
-    { value: 'other', label: 'Other', icon: '❓' },
-    { value: 'prefer-not-to-say', label: 'Prefer not to say', icon: '🚫' }
+    { value: 'non-binary', label: 'Non-binary', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M8 8l8 8" /><path d="M16 8l-8 8" /><path d="M9 3h6" /><path d="M9 21h6" /><path d="M3 9v6" /><path d="M21 9v6" /></svg>' },
+    { value: 'other', label: 'Other', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></svg>' },
+    { value: 'prefer-not-to-say', label: 'Prefer not to say', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M4.93 4.93l14.14 14.14" /></svg>' }
   ];
+
 
   const formulaOptions = [
     { value: 'male', label: 'Use Male Formula', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="6" /><path d="M17 3h4v4" /><path d="M21 3l-7.5 7.5" /></svg>' },
