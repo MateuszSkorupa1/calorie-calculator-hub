@@ -6,6 +6,7 @@
 
   let isOpen = false;
   let dropdownRef: HTMLDivElement;
+  let toggleRef: HTMLButtonElement;
 
   function handleSelect(val: string) {
     value = val;
@@ -15,6 +16,21 @@
 
   function handleToggle() {
     isOpen = !isOpen;
+    if (isOpen) {
+      updateDropdownPosition();
+    }
+  }
+
+  function updateDropdownPosition() {
+    if (toggleRef) {
+      const rect = toggleRef.getBoundingClientRect();
+      const dropdown = dropdownRef?.querySelector('.dropdown-list') as HTMLElement;
+      if (dropdown) {
+        dropdown.style.setProperty('--dropdown-width', `${rect.width}px`);
+        dropdown.style.setProperty('--dropdown-left', `${rect.left}px`);
+        dropdown.style.setProperty('--dropdown-top', `${rect.bottom + 8}px`);
+      }
+    }
   }
 
   function handleClickOutside(event: MouseEvent) {
@@ -29,15 +45,33 @@
     }
   }
 
+  function handleScroll() {
+    if (isOpen) {
+      updateDropdownPosition();
+    }
+  }
+
+  function handleResize() {
+    if (isOpen) {
+      updateDropdownPosition();
+    }
+  }
+
   // Get selected option
   $: selectedOption = options.find(opt => opt.value === value);
 </script>
 
-<svelte:window on:click={handleClickOutside} on:keydown={handleKeydown} />
+<svelte:window
+  on:click={handleClickOutside}
+  on:keydown={handleKeydown}
+  on:scroll={handleScroll}
+  on:resize={handleResize}
+/>
 
 <div class="custom-dropdown" bind:this={dropdownRef}>
   <button
     type="button"
+    bind:this={toggleRef}
     class="dropdown-toggle"
     class:active={isOpen}
     on:click={handleToggle}
@@ -194,7 +228,7 @@
   }
 
   .dropdown-list {
-    @apply absolute left-0 w-full mt-2 py-2 rounded-xl border z-50 relative overflow-hidden;
+    @apply absolute left-0 w-full mt-2 py-2 rounded-xl border relative overflow-hidden;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-color: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(20px);
@@ -202,6 +236,11 @@
     animation: fadeInScale 0.2s ease-out;
     max-height: 200px;
     overflow-y: auto;
+    z-index: 9999;
+    position: fixed;
+    width: var(--dropdown-width);
+    left: var(--dropdown-left);
+    top: var(--dropdown-top);
   }
 
   .dropdown-list::before {
