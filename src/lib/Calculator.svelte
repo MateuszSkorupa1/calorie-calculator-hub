@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CustomDropdown from '$lib/ui/CustomDropdown.svelte';
   import { bmi, tdee, calorieGoal } from '$lib/utils/calculators';
   import type { Gender } from '$lib/utils/calculators';
 
@@ -20,8 +21,20 @@
   let heightCm = defaultValues.height ?? 170;
   let age = defaultValues.age ?? 25;
   let gender: Gender = defaultValues.gender ?? 'male';
-  // For non-binary/other, let user choose formula
   let formula: 'male' | 'female' = 'male';
+
+  const genderOptions = [
+    { value: 'male', label: 'Male', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="6" /><path d="M17 3h4v4" /><path d="M21 3l-7.5 7.5" /></svg>' },
+    { value: 'female', label: 'Female', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6" /><line x1="12" y1="14" x2="12" y2="22" /><line x1="9" y1="19" x2="15" y2="19" /></svg>' },
+    { value: 'non-binary', label: 'Non-binary', icon: '⚧' },
+    { value: 'other', label: 'Other', icon: '❓' },
+    { value: 'prefer-not-to-say', label: 'Prefer not to say', icon: '🚫' }
+  ];
+
+  const formulaOptions = [
+    { value: 'male', label: 'Use Male Formula', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="6" /><path d="M17 3h4v4" /><path d="M21 3l-7.5 7.5" /></svg>' },
+    { value: 'female', label: 'Use Female Formula', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6" /><line x1="12" y1="14" x2="12" y2="22" /><line x1="9" y1="19" x2="15" y2="19" /></svg>' }
+  ];
   let activityLevel = defaultValues.activityLevel ?? 1.55;
   let goal: 'lose' | 'maintain' | 'gain' = defaultValues.goal ?? 'maintain';
 
@@ -225,71 +238,24 @@
       <!-- Gender -->
         <div class="input-card">
           <span class="input-label">Gender</span>
-          <div class="gender-toggle">
-            <button
-              class="gender-btn"
-              class:active={gender === 'male'}
-              on:click={() => gender = 'male'}
-              title="Male"
-              aria-label="Male"
-            >
-              <svg class="gender-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="10" cy="14" r="6" />
-                <path d="M17 3h4v4" />
-                <path d="M21 3l-7.5 7.5" />
-              </svg>
-            </button>
-            <button
-              class="gender-btn"
-              class:active={gender === 'female'}
-              on:click={() => gender = 'female'}
-              title="Female"
-              aria-label="Female"
-            >
-              <svg class="gender-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="6" />
-                <line x1="12" y1="14" x2="12" y2="22" />
-                <line x1="9" y1="19" x2="15" y2="19" />
-              </svg>
-            </button>
-            <button
-              class="gender-btn"
-              class:active={gender === 'non-binary'}
-              on:click={() => gender = 'non-binary'}
-              title="Non-binary"
-              aria-label="Non-binary"
-            >
-              <span class="gender-icon" style="font-size: 1.5rem;">⚧</span>
-            </button>
-            <button
-              class="gender-btn"
-              class:active={gender === 'other'}
-              on:click={() => gender = 'other'}
-              title="Other"
-              aria-label="Other"
-            >
-              <span class="gender-icon" style="font-size: 1.5rem;">❓</span>
-            </button>
-            <button
-              class="gender-btn"
-              class:active={gender === 'prefer-not-to-say'}
-              on:click={() => gender = 'prefer-not-to-say'}
-              title="Prefer not to say"
-              aria-label="Prefer not to say"
-            >
-              <span class="gender-icon" style="font-size: 1.5rem;">🚫</span>
-            </button>
-        {#if gender === 'non-binary' || gender === 'other' || gender === 'prefer-not-to-say'}
-          <div class="formula-select">
-            <label for="formula-select" class="input-label" style="margin-top: 1rem;">Calculation Formula</label>
-            <select id="formula-select" bind:value={formula} class="input-field" style="margin-top: 0.5rem;">
-              <option value="male">Use Male Formula</option>
-              <option value="female">Use Female Formula</option>
-            </select>
-            <span class="input-unit" style="right:unset;left:1rem;bottom:unset;top:100%;font-size:0.9em;color:rgba(255,255,255,0.5);">Choose the formula that best matches your physiology</span>
-          </div>
-        {/if}
-          </div>
+          <CustomDropdown
+            options={genderOptions}
+            value={gender}
+            placeholder="Select gender"
+            onChange={(val ) => gender = val}
+          />
+          {#if gender === 'non-binary' || gender === 'other' || gender === 'prefer-not-to-say'}
+            <div class="formula-select" style="margin-top: 1rem;">
+              <span class="input-label">Calculation Formula</span>
+              <CustomDropdown
+                options={formulaOptions}
+                value={formula}
+                placeholder="Select formula"
+                onChange={(val) => formula = val}
+              />
+              <span class="input-unit" style="right:unset;left:1rem;bottom:unset;top:100%;font-size:0.9em;color:rgba(255,255,255,0.5);">Choose the formula that best matches your physiology</span>
+            </div>
+          {/if}
         </div>
 
       <!-- Activity Level -->
