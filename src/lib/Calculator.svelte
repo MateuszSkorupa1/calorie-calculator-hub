@@ -20,6 +20,8 @@
   let heightCm = defaultValues.height ?? 170;
   let age = defaultValues.age ?? 25;
   let gender: Gender = defaultValues.gender ?? 'male';
+  // For non-binary/other, let user choose formula
+  let formula: 'male' | 'female' = 'male';
   let activityLevel = defaultValues.activityLevel ?? 1.55;
   let goal: 'lose' | 'maintain' | 'gain' = defaultValues.goal ?? 'maintain';
 
@@ -50,9 +52,10 @@
         case 'bmi':
           return bmi(weightKg, heightCm);
         case 'tdee':
-          return tdee(weightKg, heightCm, age, gender, activityLevel);
+          // For non-binary/other, use formula selection
+          return tdee(weightKg, heightCm, age, gender, activityLevel, (gender === 'male' || gender === 'female') ? gender : formula);
         case 'calorie':
-          const tdeeValue = tdee(weightKg, heightCm, age, gender, activityLevel);
+          const tdeeValue = tdee(weightKg, heightCm, age, gender, activityLevel, (gender === 'male' || gender === 'female') ? gender : formula);
           return calorieGoal(tdeeValue, goal);
         default:
           return null;
@@ -169,122 +172,174 @@
   <!-- Input Grid -->
   <div class="input-grid">
     <!-- Weight -->
-    <div class="input-card">
-      <label class="input-label">Weight</label>
-      <input
-        type="number"
-        value={weight}
-        on:input={(e) => updateWeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
-        class="input-field"
-        placeholder={isMetric ? "70" : "154"}
-        step={isMetric ? "0.5" : "0.1"}
-        min="1"
-        max={isMetric ? "300" : "660"}
-      />
-      <span class="input-unit">{isMetric ? 'kg' : 'lbs'}</span>
-    </div>
+      <div class="input-card">
+        <label class="input-label" for="weight-input">Weight</label>
+        <input
+          id="weight-input"
+          type="number"
+          value={weight}
+          on:input={(e) => updateWeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
+          class="input-field"
+          placeholder={isMetric ? "70" : "154"}
+          step={isMetric ? "0.5" : "0.1"}
+          min="1"
+          max={isMetric ? "300" : "660"}
+        />
+        <span class="input-unit">{isMetric ? 'kg' : 'lbs'}</span>
+      </div>
 
     <!-- Height -->
-    <div class="input-card">
-      <label class="input-label">Height</label>
-      <input
-        type="number"
-        value={height}
-        on:input={(e) => updateHeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
-        class="input-field"
-        placeholder={isMetric ? "170" : "67"}
-        step={isMetric ? "1" : "0.1"}
-        min={isMetric ? "100" : "36"}
-        max={isMetric ? "250" : "96"}
-      />
-      <span class="input-unit">{isMetric ? 'cm' : 'in'}</span>
-    </div>
+      <div class="input-card">
+        <label class="input-label" for="height-input">Height</label>
+        <input
+          id="height-input"
+          type="number"
+          value={height}
+          on:input={(e) => updateHeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
+          class="input-field"
+          placeholder={isMetric ? "170" : "67"}
+          step={isMetric ? "1" : "0.1"}
+          min={isMetric ? "100" : "36"}
+          max={isMetric ? "250" : "96"}
+        />
+        <span class="input-unit">{isMetric ? 'cm' : 'in'}</span>
+      </div>
 
     <!-- Age (if needed) -->
     {#if type !== 'bmi'}
-      <div class="input-card">
-        <label class="input-label">Age</label>
-        <input
-          type="number"
-          bind:value={age}
-          class="input-field"
-          placeholder="25"
-          step="1"
-          min="10"
-          max="120"
-        />
-        <span class="input-unit">years</span>
-      </div>
+        <div class="input-card">
+          <label class="input-label" for="age-input">Age</label>
+          <input
+            id="age-input"
+            type="number"
+            bind:value={age}
+            class="input-field"
+            placeholder="25"
+            step="1"
+            min="10"
+            max="120"
+          />
+          <span class="input-unit">years</span>
+        </div>
 
       <!-- Gender -->
-      <div class="input-card">
-        <label class="input-label">Gender</label>
-        <div class="gender-toggle">
-          <button
-            class="gender-btn"
-            class:active={gender === 'male'}
-            on:click={() => gender = 'male'}
-          >
-            Male
-          </button>
-          <button
-            class="gender-btn"
-            class:active={gender === 'female'}
-            on:click={() => gender = 'female'}
-          >
-            Female
-          </button>
+        <div class="input-card">
+          <span class="input-label">Gender</span>
+          <div class="gender-toggle">
+            <button
+              class="gender-btn"
+              class:active={gender === 'male'}
+              on:click={() => gender = 'male'}
+              title="Male"
+              aria-label="Male"
+            >
+              <svg class="gender-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="10" cy="14" r="6" />
+                <path d="M17 3h4v4" />
+                <path d="M21 3l-7.5 7.5" />
+              </svg>
+            </button>
+            <button
+              class="gender-btn"
+              class:active={gender === 'female'}
+              on:click={() => gender = 'female'}
+              title="Female"
+              aria-label="Female"
+            >
+              <svg class="gender-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="6" />
+                <line x1="12" y1="14" x2="12" y2="22" />
+                <line x1="9" y1="19" x2="15" y2="19" />
+              </svg>
+            </button>
+            <button
+              class="gender-btn"
+              class:active={gender === 'non-binary'}
+              on:click={() => gender = 'non-binary'}
+              title="Non-binary"
+              aria-label="Non-binary"
+            >
+              <span class="gender-icon" style="font-size: 1.5rem;">⚧</span>
+            </button>
+            <button
+              class="gender-btn"
+              class:active={gender === 'other'}
+              on:click={() => gender = 'other'}
+              title="Other"
+              aria-label="Other"
+            >
+              <span class="gender-icon" style="font-size: 1.5rem;">❓</span>
+            </button>
+            <button
+              class="gender-btn"
+              class:active={gender === 'prefer-not-to-say'}
+              on:click={() => gender = 'prefer-not-to-say'}
+              title="Prefer not to say"
+              aria-label="Prefer not to say"
+            >
+              <span class="gender-icon" style="font-size: 1.5rem;">🚫</span>
+            </button>
+        {#if gender === 'non-binary' || gender === 'other' || gender === 'prefer-not-to-say'}
+          <div class="formula-select">
+            <label for="formula-select" class="input-label" style="margin-top: 1rem;">Calculation Formula</label>
+            <select id="formula-select" bind:value={formula} class="input-field" style="margin-top: 0.5rem;">
+              <option value="male">Use Male Formula</option>
+              <option value="female">Use Female Formula</option>
+            </select>
+            <span class="input-unit" style="right:unset;left:1rem;bottom:unset;top:100%;font-size:0.9em;color:rgba(255,255,255,0.5);">Choose the formula that best matches your physiology</span>
+          </div>
+        {/if}
+          </div>
         </div>
-      </div>
 
       <!-- Activity Level -->
-      <div class="input-card full-width">
-        <label class="input-label">Activity Level</label>
-        <div class="activity-grid">
-          {#each Object.entries(activityLabels) as [value, label]}
-            <button
-              class="activity-btn"
-              class:active={activityLevel === parseFloat(value)}
-              on:click={() => activityLevel = parseFloat(value)}
-            >
-              {label}
-            </button>
-          {/each}
+        <div class="input-card full-width">
+          <span class="input-label">Activity Level</span>
+          <div class="activity-grid">
+            {#each Object.entries(activityLabels) as [value, label]}
+              <button
+                class="activity-btn"
+                class:active={activityLevel === parseFloat(value)}
+                on:click={() => activityLevel = parseFloat(value)}
+              >
+                {label}
+              </button>
+            {/each}
+          </div>
         </div>
-      </div>
     {/if}
 
     <!-- Goal (if calorie calculator) -->
     {#if type === 'calorie'}
-      <div class="input-card full-width">
-        <label class="input-label">Goal</label>
-        <div class="goal-grid">
-          <button
-            class="goal-btn"
-            class:active={goal === 'lose'}
-            on:click={() => goal = 'lose'}
-          >
-            <div class="goal-icon">📉</div>
-            <div class="goal-text">Lose Weight</div>
-          </button>
-          <button
-            class="goal-btn"
-            class:active={goal === 'maintain'}
-            on:click={() => goal = 'maintain'}
-          >
-            <div class="goal-icon">⚖️</div>
-            <div class="goal-text">Maintain</div>
-          </button>
-          <button
-            class="goal-btn"
-            class:active={goal === 'gain'}
-            on:click={() => goal = 'gain'}
-          >
-            <div class="goal-icon">💪</div>
-            <div class="goal-text">Gain Muscle</div>
-          </button>
+        <div class="input-card full-width">
+          <span class="input-label">Goal</span>
+          <div class="goal-grid">
+            <button
+              class="goal-btn"
+              class:active={goal === 'lose'}
+              on:click={() => goal = 'lose'}
+            >
+              <div class="goal-icon">📉</div>
+              <div class="goal-text">Lose Weight</div>
+            </button>
+            <button
+              class="goal-btn"
+              class:active={goal === 'maintain'}
+              on:click={() => goal = 'maintain'}
+            >
+              <div class="goal-icon">⚖️</div>
+              <div class="goal-text">Maintain</div>
+            </button>
+            <button
+              class="goal-btn"
+              class:active={goal === 'gain'}
+              on:click={() => goal = 'gain'}
+            >
+              <div class="goal-icon">💪</div>
+              <div class="goal-text">Gain Muscle</div>
+            </button>
+          </div>
         </div>
-      </div>
     {/if}
   </div>
 </div>
@@ -420,10 +475,18 @@
   }
 
   .gender-btn {
-    @apply flex-1 py-3 px-4 transition-all duration-300 rounded-lg font-semibold;
+    @apply flex-1 flex items-center justify-center py-2 px-2 transition-all duration-300 rounded-lg font-semibold;
     background: transparent;
     color: rgba(255, 255, 255, 0.7);
     border: none;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .gender-icon {
+    width: 24px;
+    height: 24px;
+    display: block;
   }
 
   .gender-btn.active {
