@@ -434,32 +434,6 @@
     color: rgba(255, 255, 255, 0.6);
   }
 
-  /* Gender Toggle */
-  .gender-toggle {
-    @apply flex rounded-xl p-1;
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  .gender-btn {
-    @apply flex-1 flex items-center justify-center py-2 px-2 transition-all duration-300 rounded-lg font-semibold;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.7);
-    border: none;
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  .gender-icon {
-    width: 24px;
-    height: 24px;
-    display: block;
-  }
-
-  .gender-btn.active {
-    @apply text-white scale-105;
-    background: rgba(255, 255, 255, 0.2);
-  }
-
   /* Activity Grid */
   .activity-grid {
     @apply grid grid-cols-3 gap-2;
