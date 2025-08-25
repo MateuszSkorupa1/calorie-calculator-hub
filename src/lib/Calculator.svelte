@@ -13,12 +13,10 @@
       activityLevel?: number;
       goal?: 'lose' | 'maintain' | 'gain';
     };
+    isMetric?: boolean;
   }
 
-  let { type = 'bmi', defaultValues = {} }: Props = $props();
-
-  // Unit system
-  let isMetric = $state(true);
+  let { type = 'bmi', defaultValues = {}, isMetric = true }: Props = $props();
 
   // Internal storage - always keep values in metric for consistency
   let weightKg = $state(defaultValues.weight ?? 70);
