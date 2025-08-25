@@ -16,7 +16,7 @@
     isMetric?: boolean;
   }
 
-  let { type = 'bmi', defaultValues = {}, isMetric = true }: Props = $props();
+  let { type = 'bmi', defaultValues = {}, isMetric = $bindable(true) }: Props = $props();
 
   // Internal storage - always keep values in metric for consistency
   let weightKg = $state(defaultValues.weight ?? 70);
