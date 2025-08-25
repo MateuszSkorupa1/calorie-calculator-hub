@@ -3,27 +3,31 @@
   import { bmi, tdee, calorieGoal } from '$lib/utils/calculators';
   import type { Gender } from '$lib/utils/calculators';
 
-  export let type: 'bmi' | 'tdee' | 'calorie' = 'bmi';
-  export let defaultValues: {
-    weight?: number;
-    height?: number;
-    age?: number;
-    gender?: Gender;
-    activityLevel?: number;
-    goal?: 'lose' | 'maintain' | 'gain';
-  } = {};
+  interface Props {
+    type?: 'bmi' | 'tdee' | 'calorie';
+    defaultValues?: {
+      weight?: number;
+      height?: number;
+      age?: number;
+      gender?: Gender;
+      activityLevel?: number;
+      goal?: 'lose' | 'maintain' | 'gain';
+    };
+  }
+
+  let { type = 'bmi', defaultValues = {} }: Props = $props();
 
   // Unit system
-  let isMetric = true;
+  let isMetric = $state(true);
 
   // Internal storage - always keep values in metric for consistency
-  let weightKg = defaultValues.weight ?? 70;
-  let heightCm = defaultValues.height ?? 170;
-  let age = defaultValues.age ?? 25;
-  let gender: Gender = defaultValues.gender ?? 'male';
-  let formula: 'male' | 'female' = 'male';
+  let weightKg = $state(defaultValues.weight ?? 70);
+  let heightCm = $state(defaultValues.height ?? 170);
+  let age = $state(defaultValues.age ?? 25);
+  let gender = $state<Gender>(defaultValues.gender ?? 'male');
+  let formula = $state<'male' | 'female'>('male');
 
-const genderOptions = [
+  const genderOptions = [
     { value: 'male', label: 'Male', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="6" /><path d="M17 3h4v4" /><path d="M21 3l-7.5 7.5" /></svg>' },
     { value: 'female', label: 'Female', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6" /><line x1="12" y1="14" x2="12" y2="22" /><line x1="9" y1="19" x2="15" y2="19" /></svg>' },
     { value: 'non-binary', label: 'Non-binary', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M8 8l8 8" /><path d="M16 8l-8 8" /><path d="M9 3h6" /><path d="M9 21h6" /><path d="M3 9v6" /><path d="M21 9v6" /></svg>' },
@@ -31,20 +35,20 @@ const genderOptions = [
     { value: 'prefer-not-to-say', label: 'Prefer not to say', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M4.93 4.93l14.14 14.14" /></svg>' }
   ];
 
-
   const formulaOptions = [
     { value: 'male', label: 'Use Male Formula', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="6" /><path d="M17 3h4v4" /><path d="M21 3l-7.5 7.5" /></svg>' },
     { value: 'female', label: 'Use Female Formula', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6" /><line x1="12" y1="14" x2="12" y2="22" /><line x1="9" y1="19" x2="15" y2="19" /></svg>' }
   ];
-  let activityLevel = defaultValues.activityLevel ?? 1.55;
-  let goal: 'lose' | 'maintain' | 'gain' = defaultValues.goal ?? 'maintain';
+
+  let activityLevel = $state(defaultValues.activityLevel ?? 1.55);
+  let goal = $state<'lose' | 'maintain' | 'gain'>(defaultValues.goal ?? 'maintain');
 
   // Display values - these are what the user sees and edits
-  $: weight = isMetric ? weightKg : Math.round(weightKg * 2.20462 * 10) / 10;
-  $: height = isMetric ? heightCm : Math.round(heightCm * 0.393701 * 10) / 10;
+  let weight = $derived(isMetric ? weightKg : Math.round(weightKg * 2.20462 * 10) / 10);
+  let height = $derived(isMetric ? heightCm : Math.round(heightCm * 0.393701 * 10) / 10);
 
   // Animation states
-  let isCalculated = false;
+  let isCalculated = $state(false);
 
   // Update internal metric values when user changes display values
   function updateWeight(value: number) {
@@ -56,7 +60,7 @@ const genderOptions = [
   }
 
   // Reactive result: automatically updates whenever inputs change
-  $: result = (() => {
+  let result = $derived.by(() => {
     // Validate inputs using internal metric values
     if (!weightKg || weightKg <= 0 || !heightCm || heightCm <= 0) return null;
     if (type !== 'bmi' && (!age || age <= 0)) return null;
@@ -78,14 +82,16 @@ const genderOptions = [
       console.error('Calculation error:', error);
       return null;
     }
-  })();
+  });
 
-  $: if (result !== null) {
-    isCalculated = true;
-  }
+  $effect(() => {
+    if (result !== null) {
+      isCalculated = true;
+    }
+  });
 
   // Get result unit and description
-  $: resultInfo = (() => {
+  let resultInfo = $derived.by(() => {
     if (result === null) return { unit: '', description: '', color: '' };
 
     switch (type) {
@@ -130,7 +136,7 @@ const genderOptions = [
       default:
         return { unit: '', description: '', color: 'text-gray-400' };
     }
-  })();
+  });
 
   // Activity level labels
   const activityLabels = {
@@ -158,7 +164,7 @@ const genderOptions = [
         class="pill unit-toggle"
         class:pill-primary={!isMetric}
         class:pill-secondary={isMetric}
-        on:click={() => isMetric = !isMetric}
+        onclick={() => isMetric = !isMetric}
         title="Switch between Metric and Imperial units"
       >
         <span class="unit-text">{isMetric ? 'KG' : 'LB'}</span>
@@ -192,7 +198,7 @@ const genderOptions = [
           id="weight-input"
           type="number"
           value={weight}
-          on:input={(e) => updateWeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
+          oninput={(e) => updateWeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
           class="input-field"
           placeholder={isMetric ? "70" : "154"}
           step={isMetric ? "0.5" : "0.1"}
@@ -209,7 +215,7 @@ const genderOptions = [
           id="height-input"
           type="number"
           value={height}
-          on:input={(e) => updateHeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
+          oninput={(e) => updateHeight(parseFloat((e.target as HTMLInputElement).value) || 0)}
           class="input-field"
           placeholder={isMetric ? "170" : "67"}
           step={isMetric ? "1" : "0.1"}
@@ -267,7 +273,7 @@ const genderOptions = [
               <button
                 class="activity-btn"
                 class:active={activityLevel === parseFloat(value)}
-                on:click={() => activityLevel = parseFloat(value)}
+                onclick={() => activityLevel = parseFloat(value)}
               >
                 {label}
               </button>
@@ -284,7 +290,7 @@ const genderOptions = [
             <button
               class="goal-btn"
               class:active={goal === 'lose'}
-              on:click={() => goal = 'lose'}
+              onclick={() => goal = 'lose'}
             >
               <div class="goal-icon">📉</div>
               <div class="goal-text">Lose Weight</div>
@@ -292,7 +298,7 @@ const genderOptions = [
             <button
               class="goal-btn"
               class:active={goal === 'maintain'}
-              on:click={() => goal = 'maintain'}
+              onclick={() => goal = 'maintain'}
             >
               <div class="goal-icon">⚖️</div>
               <div class="goal-text">Maintain</div>
@@ -300,7 +306,7 @@ const genderOptions = [
             <button
               class="goal-btn"
               class:active={goal === 'gain'}
-              on:click={() => goal = 'gain'}
+              onclick={() => goal = 'gain'}
             >
               <div class="goal-icon">💪</div>
               <div class="goal-text">Gain Muscle</div>

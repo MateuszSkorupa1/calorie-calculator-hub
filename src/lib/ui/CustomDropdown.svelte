@@ -1,10 +1,19 @@
 <script lang="ts">
-  export let options: Array<{ value: string; label: string; icon?: string }> = [];
-  export let value: string;
-  export let placeholder: string = '';
-  export let onChange: (val: string) => void = () => {};
+  interface Props {
+    options?: Array<{ value: string; label: string; icon?: string }>;
+    value: string;
+    placeholder?: string;
+    onChange?: (val: string) => void;
+  }
 
-  let isOpen = false;
+  let {
+    options = [],
+    value = $bindable(),
+    placeholder = '',
+    onChange = () => {}
+  }: Props = $props();
+
+  let isOpen = $state(false);
   let dropdownRef: HTMLDivElement;
   let toggleRef: HTMLButtonElement;
 
@@ -58,14 +67,14 @@
   }
 
   // Get selected option
-  $: selectedOption = options.find(opt => opt.value === value);
+  let selectedOption = $derived(options.find(opt => opt.value === value));
 </script>
 
 <svelte:window
-  on:click={handleClickOutside}
-  on:keydown={handleKeydown}
-  on:scroll={handleScroll}
-  on:resize={handleResize}
+  onclick={handleClickOutside}
+  onkeydown={handleKeydown}
+  onscroll={handleScroll}
+  onresize={handleResize}
 />
 
 <div class="custom-dropdown" bind:this={dropdownRef}>
@@ -74,7 +83,7 @@
     bind:this={toggleRef}
     class="dropdown-toggle"
     class:active={isOpen}
-    on:click={handleToggle}
+    onclick={handleToggle}
     aria-haspopup="listbox"
     aria-expanded={isOpen}
     aria-label={selectedOption ? selectedOption.label : placeholder}
@@ -107,7 +116,7 @@
           type="button"
           class="dropdown-option"
           class:selected={opt.value === value}
-          on:click={() => handleSelect(opt.value)}
+          onclick={() => handleSelect(opt.value)}
           role="option"
           aria-selected={opt.value === value}
           aria-label={opt.label}
