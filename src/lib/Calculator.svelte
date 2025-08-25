@@ -249,7 +249,7 @@
             options={genderOptions}
             value={gender}
             placeholder="Select gender"
-            onChange={(val ) => gender = val}
+            onChange={(val) => gender = val as Gender}
           />
           {#if gender === 'non-binary' || gender === 'other' || gender === 'prefer-not-to-say'}
             <div class="formula-select" style="margin-top: 1rem;">
@@ -258,7 +258,7 @@
                 options={formulaOptions}
                 value={formula}
                 placeholder="Select formula"
-                onChange={(val) => formula = val}
+                onChange={(val) => formula = val as 'male' | 'female'}
               />
               <span class="input-unit" style="right:unset;left:1rem;bottom:unset;top:100%;font-size:0.9em;color:rgba(255,255,255,0.5);">Choose the formula that best matches your physiology</span>
             </div>
